@@ -6,16 +6,19 @@ release : CFLAGS = -Wall -O3
 release : SFLAGS = -f elf64
 release : main
 
-main : obj/main.o obj/MyPrintf.o obj/IntToStrDec.o
+main : obj/main.o obj/myprintf.o obj/inttostr.o obj/strlen.o
 	g++ $(CFLAGS) $^ -o $@ -no-pie
 
 obj/main.o : src/main.cpp
 	g++ $(CFLAGS) $^ -c -o $@
 
-obj/MyPrintf.o : src/MyPrintf.s
+obj/myprintf.o : src/myprintf.s
 	nasm $(SFLAGS) $^ -o $@
 
-obj/IntToStrDec.o : src/IntToStrDec.s
+obj/inttostr.o : src/inttostr.s
+	nasm $(SFLAGS) $^ -o $@
+
+obj/strlen.o : src/strlen.s
 	nasm $(SFLAGS) $^ -o $@
 
 clean:

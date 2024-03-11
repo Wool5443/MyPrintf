@@ -1,18 +1,19 @@
-global IntToStrDec
+global IntToStr
 
-NUMBER_BUFFER equ 10
+NUMBER_BUFFER equ 64
 
 section .text
 
 ;-----------------------------------------------------------------------
-; Entry:  rdi - buffer, rsi - int number 
+; Entry:  rdi - buffer, rsi - int number, rdx - base 
 ; Result: [rdi] as a string
+; Destroys: rax, r9, r11, rcx
 ;-----------------------------------------------------------------------
-IntToStrDec:
+IntToStr:
     sub  rsp, NUMBER_BUFFER
 
     mov  rax, rsi ; rax = number
-    mov  r11,  10
+    mov  r11,  rdx
 
     mov  r9,  rdi ; save rdi
     mov  rdi, rsp ; rdi -> number buffer
@@ -21,7 +22,7 @@ IntToStrDec:
         xor  rdx, rdx
         div  r11
 
-        add  dl, '0'
+        mov  dl, [ALPHABET + rdx]
         mov  [rdi], dl
         inc  rdi
 
@@ -44,3 +45,6 @@ IntToStrDec:
     add  rsp, NUMBER_BUFFER
 
     ret
+
+section .data
+ALPHABET db '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
