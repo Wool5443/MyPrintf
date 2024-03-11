@@ -51,6 +51,8 @@ MyPrintf:
 
         mov  r12, rcx ; save rcx
         call HandleSpecifer
+        test rax, rax
+        jne  .error
         mov  rcx, r12
 
         jmp  .loop
@@ -71,6 +73,8 @@ MyPrintf:
 
     syscall ; print buffer
 
+    .error:
+
     add  rsp, BUFFER_SIZE + 5 * 8 ; free buffer and pushed args
 
     pop  r13
@@ -82,6 +86,7 @@ MyPrintf:
 ; Handles the specifer
 ; Entry: rdi - buffer, rsi - fmt, rdx - argument
 ; Assumes: *rsi = specifier
+; Result: rax - error, 0 - ok, 1 - not ok
 ; Destroys: r8, r9, r11, rax, rcx
 ;-----------------------------------------------------------------------
 HandleSpecifer:
@@ -116,11 +121,42 @@ HandleSpecifer:
         jmp  .end
     .handleInt:
         mov  r8, rsi ; save rsi
-        mov  rsi, rdx
-        mov  rdx, 10
+        mov  rsi, rdx ; rsi = arg
+
+        cmp  al, 'b'
+        je   .setBase2
+        cmp  al, 'o'
+        je   .setBase8
+        cmp  al, 'd'
+        je   .setBase10
+        cmp  al, 'x'
+        je   .setBase16
+        cmp  al, 'p'
+        je   .setBase16
+        jmp  .error
+
+        .setBase2:
+            mov  rdx, 2
+            jmp  .proceedInt
+        .setBase8:
+            mov  rdx, 8
+            jmp  .proceedInt
+        .setBase10:
+            mov  rdx, 10
+            jmp  .proceedInt
+        .setBase16:
+            mov  rdx, 16
+            jmp  .proceedInt
+
+        .proceedInt:
         call IntToStr
         mov  rsi, r8
 
     .end:
     inc  rsi
+    xor  rax, rax
+    ret
+
+    .error:
+    mov  rax, 1
     ret

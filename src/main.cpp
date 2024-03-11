@@ -1,11 +1,11 @@
 #include <stdio.h>
 
-extern "C" void MyPrintf(const char* fmt, ...);
+extern "C" int MyPrintf(const char* fmt, ...);
 
 int main()
 {
-    MyPrintf("%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n", 100, 200, 300, 400, 500, 600, 700, 800, 900);
-    MyPrintf("\n");
+    MyPrintf("%b\n\n", 7);
     MyPrintf("%%%s%c\n\n", "Hello, my friends", '!');
+    MyPrintf("Last print exit code = %d\n", MyPrintf("%g\n"));
     return 0;
 }
