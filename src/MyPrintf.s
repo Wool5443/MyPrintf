@@ -1,6 +1,6 @@
 global MyPrintf
 
-extern IntToStr
+extern IntToStrDec
 
 BUFFER_SIZE equ 1024
 
@@ -74,7 +74,7 @@ HandleSpecifer:
     .handleInt:
         mov  r8, rsi ; save rsi
         mov  rsi, rdx
-        call IntToStr
+        call IntToStrDec
         mov  rsi, r8
     inc  rsi
     ret

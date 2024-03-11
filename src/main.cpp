@@ -4,6 +4,7 @@ extern "C" void MyPrintf(const char* fmt, ...);
 
 int main()
 {
-    MyPrintf("x = %d\n", 10);
+    int b = 185000;
+    MyPrintf("x = %d\n", b);
     return 0;
 }

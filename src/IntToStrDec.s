@@ -1,4 +1,4 @@
-global IntToStr
+global IntToStrDec
 
 NUMBER_BUFFER equ 10
 
@@ -8,7 +8,7 @@ section .text
 ; Entry:  rdi - buffer, rsi - int number 
 ; Result: [rdi] as a string
 ;-----------------------------------------------------------------------
-IntToStr:
+IntToStrDec:
     sub  rsp, NUMBER_BUFFER
 
     mov  rax, rsi ; rax = number
