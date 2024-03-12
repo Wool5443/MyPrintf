@@ -123,6 +123,7 @@ HandleSpecifer:
     handleBin:
         mov  ax, '0b'
         stosw
+
         mov  r8, rsi ; save rsi
         mov  rsi, rdx
         mov  rdx, 1
@@ -132,6 +133,7 @@ HandleSpecifer:
     handleOct:
         mov  ax, '0o'
         stosw
+
         mov  r8, rsi ; save rsi
         mov  rsi, rdx
         mov  rdx, 3
@@ -139,8 +141,11 @@ HandleSpecifer:
         mov  rsi, r8
         jmp  endHandle
      handleDec:
+        mov  rax, rdx
+        cdqe ; extend edx
+
         mov  r8, rsi ; save rsi
-        mov  rsi, rdx
+        mov  rsi, rax
         mov  rdx, 10
         call IntToStr
         mov  rsi, r8
@@ -148,6 +153,7 @@ HandleSpecifer:
     handleHex:
         mov  ax, '0x'
         stosw
+
         mov  r8, rsi ; save rsi
         mov  rsi, rdx
         mov  rdx, 4

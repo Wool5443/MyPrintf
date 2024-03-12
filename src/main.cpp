@@ -4,7 +4,7 @@ extern "C" int MyPrintf(const char* fmt, ...);
 
 int main()
 {
-    int x = 45;
+    int x = -45;
     MyPrintf("bin = %b\n", x);
     MyPrintf("oct = %o\n", x);
     MyPrintf("dec = %d\n", x);

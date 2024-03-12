@@ -54,11 +54,19 @@ ret
 IntToStr:
     sub  rsp, NUMBER_BUFFER
 
+    test rsi, 1 << 63 ; sign bit
+    jnz  .continue
+    mov  al, '-'
+    stosb
+    neg  rsi
+
+    .continue:
     mov  rax, rsi ; rax = number
-    mov  r11,  rdx
+    mov  r11,  rdx ; r11 = base
 
     mov  r9,  rdi ; save rdi
     mov  rdi, rsp ; rdi -> number buffer
+
 
     .loopToInt:
         xor  rdx, rdx
