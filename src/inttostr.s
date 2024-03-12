@@ -54,8 +54,8 @@ ret
 IntToStr:
     sub  rsp, NUMBER_BUFFER
 
-    test rsi, 1 << 63 ; sign bit
-    jnz  .continue
+    test rsi, 1 << 30 ; sign bit
+    jz   .continue
     mov  al, '-'
     stosb
     neg  rsi
