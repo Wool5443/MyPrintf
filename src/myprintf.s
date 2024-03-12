@@ -1,6 +1,7 @@
 global MyPrintf
 
 extern IntToStr
+extern IntToStr2Base
 extern MyStrLen
 
 BUFFER_SIZE equ 1024
@@ -90,22 +91,22 @@ MyPrintf:
 ; Destroys: r8, r9, r11, rax, rcx
 ;-----------------------------------------------------------------------
 HandleSpecifer:
-    mov  al, [rsi]
+    xor  rcx, rcx
+    mov  cl, [rsi]
+    sub  cl, 'b' ; 'b' - minimun specifier as a number
 
-    cmp  al, 'c'
-    je   .handleChar
-    cmp  al, 's'
-    je   .handleStr
-    cmp  al, '%'
-    je   .handlePercent
+    cmp  cl, 0
+    jl   error
+    cmp  cl, 'x' - 'b'
+    jg   error
 
-    jmp  .handleInt
+    jmp  [rcx * 8 + jumpTable]
 
-    .handleChar:
+    handleChar:
         mov  al, dl
         stosb
-        jmp  .end
-    .handleStr:
+        jmp  endHandle
+    handleStr:
         mov  r8, rdi
         mov  rdi, rdx ; rdi -> str
         call MyStrLen
@@ -115,48 +116,62 @@ HandleSpecifer:
         mov  rsi, rdx ; rsi -> str
         rep  movsb
         mov  rsi, r8
-        jmp  .end
-    .handlePercent:
+        jmp  endHandle
+    handlePercent:
         mov  byte [rdi], '%'
-        jmp  .end
-    .handleInt:
+        jmp  endHandle
+    handleBin:
+        mov  ax, '0b'
+        stosw
         mov  r8, rsi ; save rsi
-        mov  rsi, rdx ; rsi = arg
-
-        cmp  al, 'b'
-        je   .setBase2
-        cmp  al, 'o'
-        je   .setBase8
-        cmp  al, 'd'
-        je   .setBase10
-        cmp  al, 'x'
-        je   .setBase16
-        cmp  al, 'p'
-        je   .setBase16
-        jmp  .error
-
-        .setBase2:
-            mov  rdx, 2
-            jmp  .proceedInt
-        .setBase8:
-            mov  rdx, 8
-            jmp  .proceedInt
-        .setBase10:
-            mov  rdx, 10
-            jmp  .proceedInt
-        .setBase16:
-            mov  rdx, 16
-            jmp  .proceedInt
-
-        .proceedInt:
+        mov  rsi, rdx
+        mov  rdx, 1
+        call IntToStr2Base
+        mov  rsi, r8
+        jmp  endHandle
+    handleOct:
+        mov  ax, '0o'
+        stosw
+        mov  r8, rsi ; save rsi
+        mov  rsi, rdx
+        mov  rdx, 3
+        call IntToStr2Base
+        mov  rsi, r8
+        jmp  endHandle
+     handleDec:
+        mov  r8, rsi ; save rsi
+        mov  rsi, rdx
+        mov  rdx, 10
         call IntToStr
         mov  rsi, r8
-
-    .end:
+        jmp  endHandle
+    handleHex:
+        mov  ax, '0x'
+        stosw
+        mov  r8, rsi ; save rsi
+        mov  rsi, rdx
+        mov  rdx, 4
+        call IntToStr2Base
+        mov  rsi, r8
+        jmp  endHandle
+    endHandle:
     inc  rsi
     xor  rax, rax
     ret
 
-    .error:
+    error:
     mov  rax, 1
     ret
+
+section .data
+jumpTable: ; 0xeb - short jump
+        dq handleBin ; b
+        dq handleChar ; c
+        dq handleDec ; d
+        times(10) dq error
+        dq handleOct ; o
+        dq handleHex ; p
+        times(2) dq error
+        dq handleStr ; s
+        times(4) dq error
+        dq handleHex ; x

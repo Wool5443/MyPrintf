@@ -13,13 +13,13 @@ obj/main.o : src/main.cpp
 	g++ $(CFLAGS) $^ -c -o $@
 
 obj/myprintf.o : src/myprintf.s
-	nasm $(SFLAGS) $^ -o $@
+	nasm $(SFLAGS) $^ -o $@ -l $^.lst
 
 obj/inttostr.o : src/inttostr.s
-	nasm $(SFLAGS) $^ -o $@
+	nasm $(SFLAGS) $^ -o $@ -l $^.lst
 
 obj/strlen.o : src/strlen.s
-	nasm $(SFLAGS) $^ -o $@
+	nasm $(SFLAGS) $^ -o $@ -l $^.lst
 
 clean:
 	rm obj/* main
