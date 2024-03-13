@@ -1,4 +1,5 @@
 global MyPrintf
+global flush
 
 extern IntToStr
 extern IntToStr2Base
@@ -6,44 +7,32 @@ extern MyStrLen
 
 BUFFER_SIZE equ 1024
 
-%macro flush 0
-    mov  rax, 0x01
-
-    mov  r8, rsi
-
-    mov  rsi, rsp ; rsi -> buffer
-
-    mov  rdx, rdi
-    sub  rdx, rsp ; rdx = strlen
-
-    mov  rdi, 1 ; std out
-
-    syscall ; print buffer
-
-    mov  rsi, r8
-%endmacro
-
 section .text
 
 ;-----------------------------------------------------------------------
 ; Analog to printf, supports %d
 ; Entry: rdi - const char* fmt, ends with \0
 ;        rsi, rdx, rcx, r8, r9, stack - args
+; Destroys: rdi, rsi, rdx, rcx, r8, r9, rdx
+; Result: rax - error code 0 - ok, 1 - not ok
 ;-----------------------------------------------------------------------
 MyPrintf:
-    push r12 ; save r12
-    push r13 ; save r13
+    push rbp
+    push rbx
+    push r12
+    push r13
 
-    lea  r13, [rsp + 8 * 2] ; *r13 = first stack arg, remember that we add rcx, 8
+    lea  r13, [rsp + 8 * 2] ; r13 -> first stack arg, remember that we add rcx, 8
 
     push r9
-    mov  r10, rsp ; *r10 = r9 - where rcx must jump to stack args
+    mov  r12, rsp ; r12 -> r9 - when rbp must jump to stack args
     push r8
     push rcx
     push rdx
     push rsi
 
-    mov  rcx, rsp ; *rcx = rsi - first arg
+    mov  rbp, rsp ; rbp -> rsi - first arg
+    mov  rbx, BUFFER_SIZE ; rbx = space left in buffer
 
     sub  rsp, BUFFER_SIZE ; allocate buffer
     mov  rsi, rdi ; rsi -> fmt
@@ -61,34 +50,41 @@ MyPrintf:
         cmp  byte [rsi], '%'
         je   .loopEnd
 
-        mov  rdx, [rcx] ; load argument to rdx
+        mov  rdx, [rbp] ; load argument to rdx
 
-        cmp  rcx, r10 ; check if reg args ended
-        cmove rcx, r13 ; if rcx == r10 rcx -> stack args
-        add  rcx, 8 ; rcx -> next arg
+        cmp  rbp, r12 ; check if reg args finished
+        cmove rbp, r13 ; if rbp == r12 rbp -> stack args
+        add  rbp, 8 ; rbp -> next arg
 
-        mov  r12, rcx ; save rcx
         call HandleSpecifer
-        test rax, rax
-        jne  .error
-        mov  rcx, r12
+        test rax, rax ; if rax != 0 error
+        jnz  .error
 
         jmp  .loop
 
         .loopEnd:
         movsb ; else (*rdi++) = (*rsi++)
-        mov  rdx, rdi
-        sub  rdx, rsp ; checking if buffer finished
-        cmp  rdx, BUFFER_SIZE
-        jb   .loop
-        flush
-        mov  rdi, rsp
+        dec  rbx
+        test rbx, rbx ; if rbx == 0 flush buffer
+        jnz  .loop
+        
+        mov  rdi, rsp ; rdi -> buffer start
+        mov  r8, rsi ; r8 -> fmt
+        mov  rsi, BUFFER_SIZE
+        call flush
+        mov  rsi, r8 ; rsi -> fmt
+        mov  rbx, BUFFER_SIZE ; rbx = buffer free space
+        mov  rdi, rsp ; rdi -> buffer
 
         jmp  .loop
 
     .end:
 
-    flush
+    mov  rdi, rsp ; rdi -> buffer start
+    mov  rsi, BUFFER_SIZE
+    sub  rsi, rbx ; rsi = buffer length
+    call flush
+    xor  rax, rax
 
     .error:
 
@@ -96,104 +92,143 @@ MyPrintf:
 
     pop  r13
     pop  r12
+    pop  rbx
+    pop  rbp
 
     ret
 
 ;-----------------------------------------------------------------------
 ; Handles the specifer
 ; Entry: rdi - buffer, rsi - fmt, rdx - argument
-; Assumes: *rsi = specifier
+; Assumes: *rsi = specifier, rbx - space left in buf
 ; Result: rax - error, 0 - ok, 1 - not ok
-; Destroys: r8, r9, r11, rax, rcx
+; Destroys: r8, r9, r10, rax, rdx
 ;-----------------------------------------------------------------------
 HandleSpecifer:
-    xor  rcx, rcx
-    mov  cl, [rsi]
-    sub  cl, 'b' ; 'b' - minimun specifier as a number
+    xor  rax, rax
+    mov  al, [rsi]
+    sub  al, 'b' ; 'b' - minimun specifier as a number
 
-    cmp  cl, 0
-    jl   error
-    cmp  cl, 'x' - 'b'
-    jg   error
+    cmp  al, 0
+    jl   .error
+    cmp  al, 'x' - 'b'
+    jg   .error
 
-    jmp  [rcx * 8 + jumpTable]
+    lea  r10, [rsi + 1] ; r10 -> fmt + 1
+    mov  rsi, rdx ; rsi = argument
 
-    handleChar:
-        mov  al, dl
+    jmp  [rax * 8 + jumpTable]
+
+    .handleChar:
+        mov  al, dl ; al = arg char
         stosb
-        jmp  endHandle
-    handleStr:
-        mov  r8, rdi
+        dec  rbx ; update free buffer size
+        test rbx, rbx ; if buffer finished flush
+        jnz  .end
+
+        sub  rdi, BUFFER_SIZE ; rdi -> buffer start
+        mov  r8, rdi ; r8 -> buffer
+        mov  rsi, BUFFER_SIZE ; rsi = buffer size
+        call flush
+        mov  rdi, r8
+
+        jmp  .end
+    .handleStr:
+        mov  r9, rdi ; rdi -> buffer
         mov  rdi, rdx ; rdi -> str
         call MyStrLen
+        mov  rdi, r9
+
         mov  rcx, rax ; rcx = strlen
-        mov  rdi, r8 ; rdi = buffer
-        mov  r8,  rsi ; save rsi
+        cmp  rcx, rbx ; if rax=strlen <= rbx just print it to buf
+        ja   HandleSpecifer.handleLongString
+
         mov  rsi, rdx ; rsi -> str
         rep  movsb
-        mov  rsi, r8
-        jmp  endHandle
-    handlePercent:
-        mov  byte [rdi], '%'
-        jmp  endHandle
-    handleBin:
+
+        sub  rbx, rcx ; update buffer free space
+        test rbx, rbx ; if rbx == 0 flush
+        jnz  .end
+
+        sub  rdi, BUFFER_SIZE ; rdi -> buffer start
+        mov  r8, rdi ; r8 -> buffer start
+        mov  rsi, BUFFER_SIZE ; rsi = buffer length
+        call flush
+        mov  rdi, r8 ; rdi -> buffer start
+
+        jmp  .end
+     .handleLongString:
+        mov  rsi, BUFFER_SIZE
+        sub  rsi, rbx ; rsi = buffer size
+        sub  rdi, rsi ; rdi -> buffer start
+        mov  r8, rdi ; r8 -> buffer start
+        call flush
+
+        mov  rdi, rdx ; rdi -> str
+        mov  rsi, rcx ; rsi = strlen
+        call flush
+        mov  rdi, r8 ; rdi -> buffer start
+        jmp .end
+
+    .handleBin:
         mov  ax, '0b'
         stosw
-
-        mov  r8, rsi ; save rsi
-        mov  rsi, rdx
         mov  rdx, 1
-        call IntToStr2Base
-        mov  rsi, r8
-        jmp  endHandle
-    handleOct:
+        jmp  .continueBasedHandle
+    .handleOct:
         mov  ax, '0o'
         stosw
-
-        mov  r8, rsi ; save rsi
-        mov  rsi, rdx
         mov  rdx, 3
-        call IntToStr2Base
-        mov  rsi, r8
-        jmp  endHandle
-     handleDec:
+        jmp  .continueBasedHandle
+    .handleDec:
         mov  rax, rdx
         cdqe ; extend edx
 
-        mov  r8, rsi ; save rsi
-        mov  rsi, rax
+        mov  rsi, rax ; rsi = argument
         mov  rdx, 10
         call IntToStr
-        mov  rsi, r8
-        jmp  endHandle
-    handleHex:
+        jmp  .end
+    .handleHex:
         mov  ax, '0x'
         stosw
-
-        mov  r8, rsi ; save rsi
-        mov  rsi, rdx
         mov  rdx, 4
+    .continueBasedHandle:
+        sub  rbx, 2 ; for 0b, 0x etc.
         call IntToStr2Base
-        mov  rsi, r8
-        jmp  endHandle
-    endHandle:
-    inc  rsi
+
+    .end:
+    mov  rsi, r10 ; rsi -> fmt + 1
     xor  rax, rax
     ret
 
-    error:
+    .error:
     mov  rax, 1
     ret
 
+;-----------------------------------------------------------------------
+; Prints buffer to stdout
+; Entry: rdi - buffer to flush, rsi - length
+; Destroys: rax, rdx, rdi, rsi
+;-----------------------------------------------------------------------
+flush:
+    mov  rax, 0x01
+
+    mov  rdx, rsi ; rdx = length
+    mov  rsi, rdi ; rsi -> buffer
+    mov  rdi, 1 ; std out
+
+    syscall ; print buffer
+ret
+
 section .data
 jumpTable: ; 0xeb - short jump
-        dq handleBin ; b
-        dq handleChar ; c
-        dq handleDec ; d
-        times(10) dq error
-        dq handleOct ; o
-        dq handleHex ; p
-        times(2) dq error
-        dq handleStr ; s
-        times(4) dq error
-        dq handleHex ; x
+        dq HandleSpecifer.handleBin ; b
+        dq HandleSpecifer.handleChar ; c
+        dq HandleSpecifer.handleDec ; d
+        times(10) dq HandleSpecifer.error
+        dq HandleSpecifer.handleOct ; o
+        dq HandleSpecifer.handleHex ; p
+        times(2) dq HandleSpecifer.error
+        dq HandleSpecifer.handleStr ; s
+        times(4) dq HandleSpecifer.error
+        dq HandleSpecifer.handleHex ; x

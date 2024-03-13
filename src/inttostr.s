@@ -1,6 +1,9 @@
 global IntToStr
 global IntToStr2Base
 
+extern flush
+
+BUFFER_SIZE equ 1024
 NUMBER_BUFFER equ 64
 
 section .text
@@ -8,48 +11,77 @@ section .text
 ;-----------------------------------------------------------------------
 ; Entry:  rdi - buffer, rsi - int number, rdx - shift for 2base
 ; Result: [rdi] as a string
-; Destroys: rax, r9, r11, rcx
+; Destroys: rax, rcx, r8, r9, rsi
 ;-----------------------------------------------------------------------
 IntToStr2Base:
     sub  rsp, NUMBER_BUFFER ; allocate buffer
-    mov  r11, rdi
-    mov  rdi, rsp
+    mov  r9, rdi ; r9 -> buffer
+    mov  rdi, rsp ; rdi -> number buffer
 
-    mov  cl, dl ; cl - shift
+    mov  cl, dl ; cl = shift
     .loopInt:
-        mov  r9, rsi ; rsi - number, r9 - remainder
+        mov  r8, rsi ; rsi - number, r8 - remainder
         shr  rsi, cl
         shl  rsi, cl
-        sub  r9, rsi
+        sub  r8, rsi
         shr  rsi, cl
-        mov  al, [r9 + ALPHABET]
+        mov  al, [r8 + ALPHABET]
         stosb
 
         test rsi, rsi
         jne  .loopInt
 
-
-    mov  rsi, rdi
+    mov  rsi, rdi ; rsi -> number buffer
     mov  rcx, rsi
     sub  rcx, rsp ; rcx = num len
-    dec  rsi ; rsi -> last first digit
-    mov  rdi, r11 ; rdi -> buffer
+    dec  rsi ; rsi -> first digit in number buffer
+    mov  rdi, r9 ; rdi -> buffer
 
-    .loopToBuf: ; r9 -> buffer, rdi -> num buffer
+    cmp  rcx, rbx ; if rcx <= rbx just print else flush
+    jbe  .noOverflow
+
+    add  rdi, BUFFER_SIZE
+    sub  rdi, rbx ; rdi -> buffer start
+    mov  r9, rdi ; r9 -> buffer start
+    
+    mov  r8, rsi ; rsi -> number buffer
+    mov  rsi, BUFFER_SIZE
+    sub  rsi, rbx ; rsi = buffer size
+    call flush
+
+    mov  rdi, r9 ; rdi -> buffer start
+    mov  rsi, r8 ; rsi -> number buffer
+    mov  rbx, BUFFER_SIZE ; reset buffer size
+
+    .noOverflow:
+
+    sub  rbx, rcx ; update buffer free space
+
+    .loopToBuf:
         mov  al, [rsi]
         mov  [rdi], al
         inc  rdi
         dec  rsi
         loop .loopToBuf
 
-    add  rsp, NUMBER_BUFFER
+    test rbx, rbx
+    jnz  .end
 
+    mov  r8, rdi ; r8 -> buffer
+    sub  rdi, BUFFER_SIZE ; rdi -> buffer start
+    mov  rsi, BUFFER_SIZE
+    call flush
+    mov  rdi, r8
+
+    .end:
+
+    add  rsp, NUMBER_BUFFER
 ret
 
 ;-----------------------------------------------------------------------
 ; Entry:  rdi - buffer, rsi - int number, rdx - base 
 ; Result: [rdi] as a string
-; Destroys: rax, r9, r11, rcx
+; Destroys: rax, r8, r9, rcx, rdx
 ;-----------------------------------------------------------------------
 IntToStr:
     sub  rsp, NUMBER_BUFFER
@@ -61,16 +93,16 @@ IntToStr:
     neg  rsi
 
     .continue:
+
     mov  rax, rsi ; rax = number
-    mov  r11,  rdx ; r11 = base
+    mov  r9,  rdx ; r9 = base
 
-    mov  r9,  rdi ; save rdi
+    mov  r8,  rdi ; r8 -> buffer
     mov  rdi, rsp ; rdi -> number buffer
-
 
     .loopToInt:
         xor  rdx, rdx
-        div  r11
+        div  r9
 
         mov  dl, [ALPHABET + rdx]
         mov  [rdi], dl
@@ -79,21 +111,51 @@ IntToStr:
         test rax, rax
         jne  .loopToInt
     
-    mov  rsi, rdi
+    mov  rsi, rdi ; rsi -> num buffer
     mov  rcx, rsi
     sub  rcx, rsp ; rcx = num len
-    dec  rsi ; rsi -> last first digit
-    mov  rdi, r9 ; rdi -> buffer
+    dec  rsi ; rsi -> first digit in buffer
+    mov  rdi, r8 ; rdi -> buffer
 
-    .loopToBuf: ; r9 -> buffer, rdi -> num buffer
+    cmp  rcx, rbx ; if rcx <= rbx continue else flush
+    jbe  .noOverflow
+
+    add  rdi, BUFFER_SIZE
+    sub  rdi, rbx ; rdi -> buffer start
+    mov  r8, rdi ; r8 -> buffer start
+
+    mov  r9, rsi ; r9 -> number buffer
+    mov  rsi, BUFFER_SIZE
+    sub  rsi, rbx ; rsi = buffer size
+    call flush
+
+    mov  rdi, r8 ; rdi -> buffer start
+    mov  rsi, r9 ; rsi -> number buffer
+    mov  rbx, BUFFER_SIZE ; reset buffer size
+
+    .noOverflow:
+
+    sub  rbx, rcx ; update buffer free space
+
+    .loopToBuf:
         mov  al, [rsi]
         mov  [rdi], al
         inc  rdi
         dec  rsi
         loop .loopToBuf
 
-    add  rsp, NUMBER_BUFFER
+    test rbx, rbx
+    jnz  .end
 
+    mov  r8, rdi ; r8 -> buffer
+    sub  rdi, BUFFER_SIZE ; rdi -> buffer start
+    mov  rsi, BUFFER_SIZE
+    call flush
+    mov  rdi, r8
+
+    .end:
+
+    add  rsp, NUMBER_BUFFER
 ret
 
 section .data

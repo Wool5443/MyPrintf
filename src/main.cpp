@@ -5,7 +5,7 @@ extern "C" int MyPrintf(const char* fmt, ...);
 
 int main()
 {
-    int x = -45;
+    int x = 45;
     MyPrintf("bin = %b\n", x);
     MyPrintf("oct = %o\n", x);
     MyPrintf("dec = %d\n", x);
@@ -19,12 +19,15 @@ int main()
     MyPrintf("хуй");
     MyPrintf("\n");
 
-    char* hugeString = (char*)calloc(1, 2048);
-    for (int i = 0; i < 2046; i++)
-        hugeString[i] = 'b';
-    hugeString[2046] = '\n';
+    int strl = 60000;
+    char* hugeString = (char*)calloc(strl, 1);
+    for (int i = 0; i < strl - 2; i++)
+        hugeString[i] = 'A' + (i % 26);
+    hugeString[strl - 4] = '%';
+    hugeString[strl - 3] = 'b';
+    hugeString[strl - 2] = '\n';
 
-    printf("%s\n", hugeString);
+    MyPrintf(hugeString, 10000);
 
     return 0;
 }
