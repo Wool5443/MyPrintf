@@ -6,6 +6,23 @@ extern MyStrLen
 
 BUFFER_SIZE equ 1024
 
+%macro flush 0
+    mov  rax, 0x01
+
+    mov  r8, rsi
+
+    mov  rsi, rsp ; rsi -> buffer
+
+    mov  rdx, rdi
+    sub  rdx, rsp ; rdx = strlen
+
+    mov  rdi, 1 ; std out
+
+    syscall ; print buffer
+
+    mov  rsi, r8
+%endmacro
+
 section .text
 
 ;-----------------------------------------------------------------------
@@ -44,7 +61,7 @@ MyPrintf:
         cmp  byte [rsi], '%'
         je   .loopEnd
 
-        mov  rdx, [rcx]
+        mov  rdx, [rcx] ; load argument to rdx
 
         cmp  rcx, r10 ; check if reg args ended
         cmove rcx, r13 ; if rcx == r10 rcx -> stack args
@@ -60,19 +77,18 @@ MyPrintf:
 
         .loopEnd:
         movsb ; else (*rdi++) = (*rsi++)
+        mov  rdx, rdi
+        sub  rdx, rsp ; checking if buffer finished
+        cmp  rdx, BUFFER_SIZE
+        jb   .loop
+        flush
+        mov  rdi, rsp
+
         jmp  .loop
 
     .end:
-    mov  rax, 0x01
 
-    mov  rsi, rsp ; rsi -> buffer
-
-    mov  rdx, rdi
-    sub  rdx, rsp ; rdx = strlen
-
-    mov  rdi, 1 ; std out
-
-    syscall ; print buffer
+    flush
 
     .error:
 
