@@ -5,7 +5,7 @@ extern IntToStr
 extern IntToStr2Base
 extern MyStrLen
 
-BUFFER_SIZE equ 1024
+BUFFER_SIZE equ 256
 
 section .text
 

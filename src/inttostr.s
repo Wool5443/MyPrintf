@@ -3,7 +3,7 @@ global IntToStr2Base
 
 extern flush
 
-BUFFER_SIZE equ 1024
+BUFFER_SIZE equ 256
 NUMBER_BUFFER equ 64
 
 section .text
