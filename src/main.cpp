@@ -31,10 +31,10 @@ int main()
     MyPrintf("ptr = %p\n", &x);
     printf("ptr = %p\n", &x);
 
-    MyPrintf("хуй");
-    MyPrintf("хуй");
-    MyPrintf("хуй");
-    MyPrintf("хуй");
+    MyPrintf("х#й");
+    MyPrintf("х#й");
+    MyPrintf("х#й");
+    MyPrintf("х#й");
     MyPrintf("\n");
 
     // int strl = 60000;
@@ -50,6 +50,11 @@ int main()
     // size_t sampleSize = 100000;
     // perfFuncPrintf(sampleSize);
     // perfFuncMyPrintf(sampleSize);
+
+    // Primer 0xBADDED
+
+    MyPrintf("%o\n%d %s %x %d%%%c%b\n%d %s %x %d%%%c%b\n", -1, -1, "love", 3802, 100, 33, 126,
+                                                           -1, "love", 3802, 100, 33, 126);
 
     return 0;
 }

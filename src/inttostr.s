@@ -38,7 +38,7 @@ IntToStr2Base:
     mov  rdi, r9 ; rdi -> buffer
 
     cmp  rcx, rbx ; if rcx <= rbx just print else flush
-    jbe  .noOverflow
+    jle  .noOverflow
 
     add  rdi, BUFFER_SIZE
     sub  rdi, rbx ; rdi -> buffer start
@@ -90,6 +90,7 @@ IntToStr:
     jz   .continue
     mov  al, '-'
     stosb
+    dec  rbx
     neg  rsi
 
     .continue:
@@ -118,7 +119,7 @@ IntToStr:
     mov  rdi, r8 ; rdi -> buffer
 
     cmp  rcx, rbx ; if rcx <= rbx continue else flush
-    jbe  .noOverflow
+    jle  .noOverflow
 
     add  rdi, BUFFER_SIZE
     sub  rdi, rbx ; rdi -> buffer start

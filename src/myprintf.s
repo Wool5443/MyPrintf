@@ -146,9 +146,9 @@ HandleSpecifer:
         ja   HandleSpecifer.handleLongString
 
         mov  rsi, rdx ; rsi -> str
+        sub  rbx, rcx ; update buffer free space
         rep  movsb
 
-        sub  rbx, rcx ; update buffer free space
         test rbx, rbx ; if rbx == 0 flush
         jnz  .end
 
