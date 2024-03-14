@@ -47,9 +47,9 @@ int main()
 
     // MyPrintf(hugeString, 10000);
 
-    // size_t sampleSize = 100000;
-    // perfFuncPrintf(sampleSize);
-    // perfFuncMyPrintf(sampleSize);
+    size_t sampleSize = 100000;
+    perfFuncPrintf(sampleSize);
+    perfFuncMyPrintf(sampleSize);
 
     // Primer 0xBADDED
 
