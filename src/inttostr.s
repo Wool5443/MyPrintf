@@ -40,13 +40,13 @@ IntToStr2Base:
     cmp  rcx, rbx ; if rcx <= rbx just print else flush
     jle  .noOverflow
 
-    add  rdi, BUFFER_SIZE
-    sub  rdi, rbx ; rdi -> buffer start
-    mov  r9, rdi ; r9 -> buffer start
-    
     mov  r8, rsi ; rsi -> number buffer
     mov  rsi, BUFFER_SIZE
     sub  rsi, rbx ; rsi = buffer size
+
+    sub  rdi, rsi ; rdi -> buffer start
+    mov  r9, rdi ; r9 -> buffer start
+    
     call flush
 
     mov  rdi, r9 ; rdi -> buffer start
@@ -121,13 +121,13 @@ IntToStr:
     cmp  rcx, rbx ; if rcx <= rbx continue else flush
     jle  .noOverflow
 
-    add  rdi, BUFFER_SIZE
-    sub  rdi, rbx ; rdi -> buffer start
-    mov  r8, rdi ; r8 -> buffer start
-
     mov  r9, rsi ; r9 -> number buffer
     mov  rsi, BUFFER_SIZE
-    sub  rsi, rbx ; rsi = buffer size
+    sub  rsi, rbx ; rsi = buffer length
+
+    sub  rdi, rsi ; rdi -> buffer start
+    mov  r8, rdi ; r8 -> buffer start
+
     call flush
 
     mov  rdi, r8 ; rdi -> buffer start
