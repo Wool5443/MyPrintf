@@ -175,11 +175,13 @@ HandleSpecifer:
     .handleBin:
         mov  ax, '0b'
         stosw
+        mov  rsi, rdx ; rsi = argument
         mov  rdx, 1
         jmp  .continueBasedHandle
     .handleOct:
         mov  ax, '0o'
         stosw
+        mov  rsi, rdx ; rsi = argument
         mov  rdx, 3
         jmp  .continueBasedHandle
     .handleDec:
@@ -193,6 +195,7 @@ HandleSpecifer:
     .handleHex:
         mov  ax, '0x'
         stosw
+        mov  rsi, rdx ; rsi = argument
         mov  rdx, 4
     .continueBasedHandle:
         sub  rbx, 2 ; for 0b, 0x etc.
