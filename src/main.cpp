@@ -26,7 +26,7 @@ int main()
     int x = 45;
     MyPrintf("bin = %b\n", x);
     MyPrintf("oct = %o\n", x);
-    MyPrintf("dec = %d\n", x);
+    MyPrintf("dec = %d %d %d %d %d %d %d\n", x, x, x, x, x, x, x);
     MyPrintf("hex = %x\n", x);
     MyPrintf("ptr = %p\n", &x);
     printf("ptr = %p\n", &x);
@@ -37,19 +37,19 @@ int main()
     MyPrintf("хуй");
     MyPrintf("\n");
 
-    int strl = 60000;
-    char* hugeString = (char*)calloc(strl, 1);
-    for (int i = 0; i < strl - 2; i++)
-        hugeString[i] = 'A' + (i % 26);
-    hugeString[strl - 4] = '%';
-    hugeString[strl - 3] = 'b';
-    hugeString[strl - 2] = '\n';
+    // int strl = 60000;
+    // char* hugeString = (char*)calloc(strl, 1);
+    // for (int i = 0; i < strl - 2; i++)
+    //     hugeString[i] = 'A' + (i % 26);
+    // hugeString[strl - 4] = '%';
+    // hugeString[strl - 3] = 'b';
+    // hugeString[strl - 2] = '\n';
 
-    MyPrintf(hugeString, 10000);
+    // MyPrintf(hugeString, 10000);
 
-    size_t sampleSize = 100000;
-    perfFuncPrintf(sampleSize);
-    perfFuncMyPrintf(sampleSize);
+    // size_t sampleSize = 100000;
+    // perfFuncPrintf(sampleSize);
+    // perfFuncMyPrintf(sampleSize);
 
     return 0;
 }

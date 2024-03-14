@@ -12,29 +12,30 @@ section .text
 ;-----------------------------------------------------------------------
 ; Analog to printf, supports %d
 ; Entry: rdi - const char* fmt, ends with \0
-;        rsi, rdx, rcx, r8, r9, stack - args
+;        rsi, rdx, rcx, r8, r9, r10, stack - args
 ; Destroys: rdi, rsi, rdx, rcx, r8, r9, rdx
 ; Result: rax - error code 0 - ok, 1 - not ok
 ;-----------------------------------------------------------------------
 MyPrintf:
-    push rbp
-    push rbx
-    push r12
-    push r13
-
-    lea  r13, [rsp + 8 * 2] ; r13 -> first stack arg, remember that we add rcx, 8
+    pop  r10 ; r10 = ret addr
 
     push r9
-    mov  r12, rsp ; r12 -> r9 - when rbp must jump to stack args
     push r8
     push rcx
     push rdx
-    push rsi
+    push rsi ; now all regs are continious in stack
 
-    mov  rbp, rsp ; rbp -> rsi - first arg
-    mov  rbx, BUFFER_SIZE ; rbx = space left in buffer
+    push rbp
+
+    lea  rbp, [rsp + 8] ; rbp -> first arg
+
+    push rbx
+    push r12
+    push r13 ; save regs
+    push r10 ; save ret addr
 
     sub  rsp, BUFFER_SIZE ; allocate buffer
+    mov  rbx, BUFFER_SIZE ; rbx = space left in buffer
     mov  rsi, rdi ; rsi -> fmt
     mov  rdi, rsp ; rdi -> buffer
 
@@ -51,9 +52,6 @@ MyPrintf:
         je   .loopEnd
 
         mov  rdx, [rbp] ; load argument to rdx
-
-        cmp  rbp, r12 ; check if reg args finished
-        cmove rbp, r13 ; if rbp == r12 rbp -> stack args
         add  rbp, 8 ; rbp -> next arg
 
         call HandleSpecifer
@@ -88,12 +86,16 @@ MyPrintf:
 
     .error:
 
-    add  rsp, BUFFER_SIZE + 5 * 8 ; free buffer and pushed args
+    add  rsp, BUFFER_SIZE ;
 
+    pop  r8
     pop  r13
     pop  r12
     pop  rbx
     pop  rbp
+
+    add  rsp, 5 * 8 ; free push args
+    push r8 ; ret addr back in place
 
     ret
 
@@ -220,7 +222,6 @@ flush:
     syscall ; print buffer
 ret
 
-section .data
 jumpTable: ; 0xeb - short jump
         dq HandleSpecifer.handleBin ; b
         dq HandleSpecifer.handleChar ; c
