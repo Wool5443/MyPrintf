@@ -225,10 +225,10 @@ jumpTable: ; 0xeb - short jump
         dq HandleSpecifer.handleBin ; b
         dq HandleSpecifer.handleChar ; c
         dq HandleSpecifer.handleDec ; d
-        times(10) dq HandleSpecifer.error
+        times('o' - 'd' - 1) dq HandleSpecifer.error
         dq HandleSpecifer.handleOct ; o
         dq HandleSpecifer.handleHex ; p
-        times(2) dq HandleSpecifer.error
+        times('s' - 'p' - 1) dq HandleSpecifer.error
         dq HandleSpecifer.handleStr ; s
-        times(4) dq HandleSpecifer.error
+        times('x' - 's' - 1) dq HandleSpecifer.error
         dq HandleSpecifer.handleHex ; x
