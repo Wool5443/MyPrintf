@@ -26,7 +26,7 @@ int main()
     int x = 45;
     MyPrintf("bin = %b\n", x);
     MyPrintf("oct = %o\n", x);
-    MyPrintf("dec = %d %d %d %d %d %d %d\n", x, x, x, x, x, x, x);
+    MyPrintf("dec = %d %d %d %d %d %d %d\n%d %s %x %d%%%c%b\n", x, x, x, x, x, x, x, -1, "love", 3802, 100, 33, 30);
     MyPrintf("hex = %x\n", x);
     MyPrintf("ptr = %p\n", &x);
     printf("ptr = %p\n", &x);
@@ -48,8 +48,8 @@ int main()
     // MyPrintf(hugeString, 10000);
 
     size_t sampleSize = 100000;
-    perfFuncPrintf(sampleSize);
-    perfFuncMyPrintf(sampleSize);
+    // perfFuncPrintf(sampleSize);
+    // perfFuncMyPrintf(sampleSize);
 
     // Primer 0xBADDED
 

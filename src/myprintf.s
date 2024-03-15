@@ -226,13 +226,13 @@ flush:
 ret
 
 jumpTable: ; 0xeb - short jump
-        dq HandleSpecifer.handleBin ; b
-        dq HandleSpecifer.handleChar ; c
-        dq HandleSpecifer.handleDec ; d
+                             dq HandleSpecifer.handleBin  ; b
+                             dq HandleSpecifer.handleChar ; c
+                             dq HandleSpecifer.handleDec  ; d
         times('o' - 'd' - 1) dq HandleSpecifer.error
-        dq HandleSpecifer.handleOct ; o
-        dq HandleSpecifer.handleHex ; p
+                             dq HandleSpecifer.handleOct  ; o
+                             dq HandleSpecifer.handleHex  ; p
         times('s' - 'p' - 1) dq HandleSpecifer.error
-        dq HandleSpecifer.handleStr ; s
+                             dq HandleSpecifer.handleStr  ; s
         times('x' - 's' - 1) dq HandleSpecifer.error
-        dq HandleSpecifer.handleHex ; x
+                             dq HandleSpecifer.handleHex  ; x
